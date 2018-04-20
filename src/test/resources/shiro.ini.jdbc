@@ -1,0 +1,66 @@
+# Shiro's configuration
+# (see more at http://shiro.apache.org/configuration.html#Configuration-INIConfiguration)
+
+#--------------
+# MAIN SECTION
+#--------------
+[main]
+
+# DataSource used to get users and roles, parameters can be as specified
+# in https://commons.apache.org/proper/commons-dbcp/configuration.html
+# Uncomment the following lines and set custom values if needed:
+ds = org.apache.tomcat.dbcp.dbcp2.BasicDataSource
+ds.driverClassName = com.mysql.jdbc.Driver
+ds.url = jdbc:mysql://[ip]/rdap?characterEncoding=UTF-8
+ds.username = user
+ds.password = pass
+
+# Custom realm, extended from Apache Shiro's JdbcRealm, uses the DataSource previously declared
+# Uncomment if needed (provides Basic authentication using a Database connection)
+customRealm = mx.nic.labs.rdap.auth.X509.shiro.CustomX509JdbcRealm
+customRealm.dataSource = $ds
+
+
+# The default query used to retrieve account data for the user, must return the user's password
+# Eg. If using the Red Dog's SQL Provider reference implementation the query will be:
+# customRealm.authenticationQuery = SELECT rus_pass FROM rdap_user WHERE rus_name = ?
+#customRealm.authenticationQuery = 
+
+# The default query used to retrieve the roles that apply to a user, must return the roles names
+# Eg. If using the Red Dog's SQL Provider reference implementation the query will be:
+customRealm.userRolesQuery = SELECT rar_name FROM rdap_user_role WHERE rus_name = ?
+
+# Use the custom realm
+# Uncomment the following line if authorization is going to be used
+securityManager.realms = $customRealm
+
+# Use default web session manager, disable session cookies (patch to force authentication by request,
+# basic behavior of REST)
+# Uncomment the following lines if authorization is going to be used
+sessionManager = org.apache.shiro.web.session.mgt.DefaultWebSessionManager
+securityManager.sessionManager = $sessionManager
+securityManager.sessionManager.sessionIdCookieEnabled = false
+
+certFilter = mx.nic.labs.rdap.auth.X509.shiro.X509Filter
+certFilter.applicationName = rdap-server
+certFilter.enabled = true
+
+
+#--------------
+# URLS SECTION
+#--------------
+[urls]
+
+# Restricted paths that need authentication (one path per line)
+/domain/** = certFilter[permissive]
+#/nameservers/** = certFilter
+#/entities/** = certFilter
+
+# Public paths, by default authentication isn't enabled. If needed, the public paths can be prepared to
+# receive credentials if they are sent (use the filter 'authcBasic[permissive]').
+# DO NOT COMMENT/ERASE, if the use of credentials isn't required then set '{auth-filter}.enabled = false' or
+# also the filter 'anon' can be used (see more at Red Dog docs
+# https://www.reddog.mx/using-apache-shiro.html#disable-basic-authentication).
+#/** = certFilter[permissive]
+/** = anon
+

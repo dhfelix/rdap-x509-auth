@@ -1,0 +1,46 @@
+# Shiro's configuration
+# (see more at http://shiro.apache.org/configuration.html#Configuration-INIConfiguration)
+
+#--------------
+# MAIN SECTION
+#--------------
+[main]
+
+# Custom realm, extended from Apache Shiro's JdbcRealm, uses the DataSource previously declared
+# Uncomment if needed (provides Basic authentication using a Database connection)
+customRealm = mx.nic.labs.rdap.auth.X509.shiro.CustomX509SecurityRealm
+
+# Use the custom realm
+# Uncomment the following line if authorization is going to be used
+securityManager.realms = $customRealm
+
+# Use default web session manager, disable session cookies (patch to force authentication by request,
+# basic behavior of REST)
+# Uncomment the following lines if authorization is going to be used
+sessionManager = org.apache.shiro.web.session.mgt.DefaultWebSessionManager
+securityManager.sessionManager = $sessionManager
+securityManager.sessionManager.sessionIdCookieEnabled = false
+
+certFilter = mx.nic.labs.rdap.auth.X509.shiro.X509Filter
+certFilter.applicationName = rdap-server
+certFilter.enabled = true
+
+
+#--------------
+# URLS SECTION
+#--------------
+[urls]
+
+# Restricted paths that need authentication (one path per line)
+/domain/** = certFilter[permissive]
+#/nameservers/** = certFilter
+#/entities/** = certFilter
+
+# Public paths, by default authentication isn't enabled. If needed, the public paths can be prepared to
+# receive credentials if they are sent (use the filter 'authcBasic[permissive]').
+# DO NOT COMMENT/ERASE, if the use of credentials isn't required then set '{auth-filter}.enabled = false' or
+# also the filter 'anon' can be used (see more at Red Dog docs
+# https://www.reddog.mx/using-apache-shiro.html#disable-basic-authentication).
+#/** = certFilter[permissive]
+/** = anon
+
