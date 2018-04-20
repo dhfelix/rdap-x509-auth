@@ -39,19 +39,36 @@ public class X509Filter extends AuthenticatingFilter {
 			logger.log(Level.SEVERE, "null javax.servlet.request.X509Certificate");
 			return new X509AuthToken();
 		}
+
 		String subject = null;
 		X509Certificate[] certs = (X509Certificate[]) certObj;
+		if (certs.length == 0) {
+			logger.log(Level.SEVERE, "null javax.servlet.request.X509Certificate");
+			return new X509AuthToken();
+		}
 		X509Certificate cert = certs[0];
-
-		
-		X500Name instance = X500Name.getInstance(PrincipalUtil.getSubjectX509Principal(cert));
-		RDN[] rdNs = instance.getRDNs(BCStyle.CN);
-		subject = rdNs[0].getFirst().getValue().toString();
+		if (cert == null) {
+			logger.log(Level.SEVERE, "null javax.servlet.request.X509Certificate");
+			return new X509AuthToken();
+		}
 
 		boolean rememberMe = isRememberMe(request);
 		String host = getHost(request);
 
-		return new X509AuthToken(subject, host, rememberMe, certs[0]);
+		X500Name instance = X500Name.getInstance(PrincipalUtil.getSubjectX509Principal(cert));
+		RDN[] rdNs = instance.getRDNs(BCStyle.CN);
+		if (rdNs == null || rdNs.length == 0 || rdNs[0] == null || rdNs[0].getFirst() == null
+				|| rdNs[0].getFirst().getValue() == null) {
+			return createToken("", host, rememberMe, cert);
+		}
+
+		subject = rdNs[0].getFirst().getValue().toString();
+
+		return createToken(subject, host, rememberMe, cert);
+	}
+
+	private AuthenticationToken createToken(String subject, String host, boolean rememberMe, X509Certificate x509) {
+		return new X509AuthToken(subject, host, rememberMe, x509);
 	}
 
 	@Override
