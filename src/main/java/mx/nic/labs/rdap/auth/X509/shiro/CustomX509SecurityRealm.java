@@ -55,6 +55,9 @@ public class CustomX509SecurityRealm extends AuthorizingRealm {
 
 	@Override
 	protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals) {
+		if (principals.fromRealm(getName()).isEmpty()) {
+			return null;
+		}
 		SimpleAuthorizationInfo info = new SimpleAuthorizationInfo(Collections.emptySet());
 		info.setStringPermissions(null);
 		return info;

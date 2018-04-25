@@ -12,7 +12,9 @@ import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.authc.SimpleAuthenticationInfo;
+import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.realm.jdbc.JdbcRealm;
+import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.util.JdbcUtils;
 
 import mx.nic.labs.rdap.auth.X509.shiro.token.X509AuthToken;
@@ -66,6 +68,14 @@ public class CustomX509JdbcRealm extends JdbcRealm {
 		}
 
 		return new SimpleAuthenticationInfo(username, upToken.getCredentials(), getName());
+	}
+
+	@Override
+	protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals) {
+		if (principals.fromRealm(getName()).isEmpty()) {
+			return null;
+		}
+		return super.doGetAuthorizationInfo(principals);
 	}
 
 	@Override
